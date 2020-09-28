@@ -1,0 +1,10 @@
+---
+title: "DS 202 Lab 3"
+author: "Carter Wunsch"
+date: "9/27/2020"
+output: html_document
+---
+
+```{r}
+
+```
