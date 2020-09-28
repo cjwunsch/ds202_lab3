@@ -6,5 +6,72 @@ output: html_document
 ---
 
 ```{r}
+library(ggplot2)
+library(dplyr)
+library(readxl)
+dat <- readxl::read_xls('GSS.xls')
 
+colnames(dat)[1] <- "Married"
+colnames(dat)[2] <- "Education"
+colnames(dat)[3] <- "Sex"
+colnames(dat)[4] <- "Party"
+colnames(dat)[5] <- "Happiness"
+dat$Education <- as.numeric(dat$Education)
 ```
+
+1. This data shows that people who don't know their political party have the lowest amount of education on average. Independents have less education than democrats and republicans, and republicans have more education than democrats on average.
+```{r}
+group_by(dat, Party) %>% na.omit() %>% summarise(mean = mean(Education, na.rm = TRUE)) %>% arrange(mean)
+```
+
+2.
+```{r}
+highestEducation <- group_by(dat, Party) %>% filter(Education >= median(Education, na.rm = TRUE)) %>% ungroup()
+str(highestEducation)
+```
+
+3.
+```{r}
+happy <- function(arg) {
+  ifelse(arg == "Pretty happy" | arg == "Very happy", "Happy", "Unhappy")
+}
+q3df <- mutate(dat, Happiness = happy(Happiness)) %>% na.omit %>% group_by(Married, Happiness) %>% filter(Married != 'No answer') %>% summarise(count = n()) %>% mutate (total = sum(count)) %>% ungroup()
+
+ggplot(q3df, aes(x=Married,y=count/total, fill=Happiness)) + geom_bar(stat="identity")
+```
+
+This chart shows that, on average, most people report being happy no matter what their marital status is. On average, people who are separated are the least happy, and people who are married are the most happy. This is what I expected to see from the data.
+
+4.
+```{r}
+q4df <- mutate(dat, Happiness = happy(Happiness)) %>% na.omit %>% group_by(Married, Happiness, Party) %>% filter(Married != 'No answer' & Party != "Don't know" & Party != "No answer") %>% summarise(count = n()) %>% mutate (total = sum(count)) %>% ungroup()
+
+ggplot(q4df, aes(x=Married,y=count/total, fill=Happiness)) + geom_bar(stat="identity") + facet_wrap(~Party)
+```
+
+This graph shows that taking account for political party does change how happy each marital status group is. However, for the most part, the proportions of happy/unhappy are very similar to the other same marital status of different parties. This leads me to believe that political party may have an effect on happiness, but not a very big one.
+
+5.
+```{r}
+q5df <- group_by(dat, Married) %>% na.omit %>% filter(Married != 'No answer') %>% summarise(educ = mean(Education))
+ggplot(q5df, aes(x=Married, y=educ)) + geom_bar(stat='identity')
+```
+
+People who were never married have the highest level of education on average. A possible reason for this could be that they were in school so they didn't have time to get married. People who are widowed have the lowest level of education on average. A possible reason for this is that they might be older than most others, and older people on average don't go to school as long as the younger generations.
+
+6a.
+```{r}
+q6dfa <- group_by(dat, Sex) %>% na.omit %>% summarise(educ = mean(Education))
+ggplot(q6dfa, aes(x=Sex, y=educ)) + geom_bar(stat='identity')
+```
+
+This bar chart shows they average level of education for both men and women. On average, men go to school slightly longer than women.
+
+6b.
+```{r}
+q6dfb <- group_by(dat, Happiness) %>% na.omit %>% filter(Happiness != 'No answer' & Happiness != 'Not applicable') %>% summarise(educ = mean(Education))
+ggplot(q6dfb, aes(x=Happiness, y = educ)) + geom_bar(stat='identity')
+```
+
+This bar chart shows that, on average, the happiest people tend to have higher education than the not so happy people. One possible reason to explain this is that those who went to school longer feel more achieved and might have secured a better job than those who went to school for less time.
+
